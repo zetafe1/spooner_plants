@@ -1,3 +1,7 @@
+# WIP Mod from Spooner fork from @daggre
+
+Discord: https://discord.gg/leonthecreator
+
 # Spooner
 
 Tool for spawning, placing, and removing entities, inspired by Menyoo's Object Spooner.
