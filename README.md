@@ -1,3 +1,11 @@
+# WIP fork from daggre Spooner fork
+
+- Adds new export options "Plants" with rotation matrix ouput
+
+# Discord
+
+https://discord.gg/leonthecreator
+
 # Spooner
 
 Tool for spawning, placing, and removing entities, inspired by Menyoo's Object Spooner.
