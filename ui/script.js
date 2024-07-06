@@ -2412,11 +2412,17 @@ window.addEventListener('load', function() {
 				break;
 		}
 	}));
-
+	
 	document.getElementById('import-export-format').addEventListener('input', function(event) {
 		var importButton = document.getElementById('import-db');
-
+		
 		switch (this.value) {
+			case 'ymap':
+				importButton.disabled = true;
+				break;
+			case 'plants':
+				importButton.disabled = true;
+				break;
 			case 'spooner-db-json':
 				importButton.disabled = false;
 				break;

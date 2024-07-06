@@ -1809,6 +1809,78 @@ local function toQuaternion(pitch, roll, yaw)
 	return q
 end
 
+function ConvertDatabaseToPlants(database)
+	local minX, maxX, minY, maxY, minZ, maxZ
+
+	local entitiesXml = '\t<entities>\n'
+
+	for entity, properties in pairs(database.spawn) do
+		if properties.type == 3 then
+			local q = toQuaternion(properties.pitch, properties.roll, properties.yaw)
+
+			if not minX or properties.x < minX then
+				minX = properties.x
+			end
+			if not maxX or properties.x > maxX then
+				maxX = properties.x
+			end
+			if not minY or properties.y < minY then
+				minY = properties.y
+			end
+			if not maxY or properties.y > maxY then
+				maxY = properties.y
+			end
+			if not minZ or properties.z < minZ then
+				minZ = properties.z
+			end
+			if not maxZ or properties.z > maxZ then
+				maxZ = properties.z
+			end
+			
+			local m1, m2, m3, m4, m5, m6, m7, m8, m9 = RotationMatrix(q.w, q.x, q.y, q.z)
+			
+			entitiesXml = entitiesXml .. '\t\t<Item type="CEntityDef">\n'
+			entitiesXml = entitiesXml .. '\t\t\t<archetypeName>' .. properties.name .. '</archetypeName>\n'
+			entitiesXml = entitiesXml .. string.format('\t\t\t<position x="%f" y="%f" z="%f"/>\n', properties.x, properties.y, properties.z)
+			entitiesXml = entitiesXml .. string.format('\t\t\t<rotation w="%f" x="%f" y="%f" z="%f"/>\n', q.w, q.x, q.y, q.z)
+			entitiesXml = entitiesXml .. string.format('\t\t\t<RotationMatrix>\n\t\t\t\t %f, %f, %f, %f\n\t\t\t\t %f, %f, %f, %f\n\t\t\t\t %f, %f, %f, %f \n\t\t\t</RotationMatrix>\n', m1, m2, m3, properties.x, m4, m5, m6, properties.y, m7, m8, m9, properties.z)
+			entitiesXml = entitiesXml .. '\t\t</Item>\n'
+		end
+	end
+
+	entitiesXml = entitiesXml .. '\t</entities>\n'
+
+	local xml = '<?xml version="1.0"?>\n<CMapData>\n\t<flags value="2"/>\n\t<contentFlags value="65"/>\n'
+
+	if minX and minY and minZ and maxX and maxY and maxZ then
+		xml = xml .. string.format('\t<streamingExtentsMin x="%f" y="%f" z="%f"/>\n', minX - 400, minY - 400, minZ - 400)
+		xml = xml .. string.format('\t<streamingExtentsMax x="%f" y="%f" z="%f"/>\n', maxX + 400, maxY + 400, maxZ + 400)
+		xml = xml .. string.format('\t<entitiesExtentsMin x="%f" y="%f" z="%f"/>\n', minX -200, minY -200, minZ -200)
+		xml = xml .. string.format('\t<entitiesExtentsMax x="%f" y="%f" z="%f"/>\n', maxX + 200, maxY +200, maxZ +200)
+
+		xml = xml .. entitiesXml
+	end
+
+	xml = xml .. '</CMapData>'
+
+	return xml
+end
+
+function RotationMatrix(w, x, y, z)
+
+    local m1 = 1 - 2 * (y * y + z * z)
+    local m2 = 2 * (x * y - z * w)
+    local m3 = 2 * (x * z + y * w)
+    local m4 = 2 * (x * y + z * w)
+    local m5 = 1 - 2 * (x * x + z * z)
+    local m6 = 2 * (y * z - x * w)
+    local m7 = 2 * (x * z - y * w)
+    local m8 = 2 * (y * z + x * w)
+    local m9 = 1 - 2 * (x * x + y * y)
+
+    return m1, m2, m3, m4, m5, m6, m7, m8, m9
+end
+
 function ConvertDatabaseToYmap(database)
 	local minX, maxX, minY, maxY, minZ, maxZ
 
@@ -1851,8 +1923,8 @@ function ConvertDatabaseToYmap(database)
 			entitiesXml = entitiesXml .. '\t\t\t<scaleXY value="1"/>\n'
 			entitiesXml = entitiesXml .. '\t\t\t<scaleZ value="1"/>\n'
 			entitiesXml = entitiesXml .. '\t\t\t<parentIndex value="-1"/>\n'
-			entitiesXml = entitiesXml .. '\t\t\t<lodDist value="500"/>\n'
-			entitiesXml = entitiesXml .. '\t\t\t<childLodDist value="500"/>\n'
+			entitiesXml = entitiesXml .. '\t\t\t<lodDist value="80"/>\n'
+			entitiesXml = entitiesXml .. '\t\t\t<childLodDist value="80"/>\n'
 			entitiesXml = entitiesXml .. '\t\t\t<lodLevel>LODTYPES_DEPTH_HD</lodLevel>\n'
 			entitiesXml = entitiesXml .. '\t\t\t<numChildren value="0"/>\n'
 			entitiesXml = entitiesXml .. '\t\t\t<ambientOcclusionMultiplier value="255"/>\n'
@@ -1914,73 +1986,73 @@ function RestoreDbs(content)
 end
 
 local function loadYmap(xml)
-	local curElem, isEntity
+    local curElem, isEntity
 
-	local db = {}
-	local i = 0
-	local key = "0"
+    local db = {}
+    local i = 0
+    local key = "0"
 
-	local parser = SLAXML:parser {
-		startElement = function(name, nsURI, nsPrefix)
-			curElem = name
-		end,
-		attribute = function(name, value, nsURI, nsPrefix)
-			if name == "type" and value == "CEntityDef" then
-				isEntity = true
-				db[key] = {
-					quaternion = {},
-					x = 0.0,
-					y = 0.0,
-					z = 0.0,
-					pitch = 0.0,
-					roll = 0.0,
-					yaw = 0.0
-				}
-			elseif curElem == "position" then
-				value = (tonumber(value) or 0) + 0.0
-				if name == "x" then
-					db[key].x = value
-				elseif name == "y" then
-					db[key].y = value
-				elseif name == "z" then
-					db[key].z = value
-				end
-			elseif curElem == "rotation" then
-				db[key].quaternion[name] = (tonumber(value) or 0) + 0.0
-			elseif isEntity and curElem == "flags" and name == "value" then
-				value = tonumber(value) or 0
-				db[key].isFrozen = (value & 32) == 32
-			end
-		end,
-		closeElement = function(name, nsURI)
-			if isEntity and name == "Item" then
-				isEntity = false
-				i = i + 1
-				key = tostring(i)
-			end
-			curElem = nil
-		end,
-		text = function(text, cdata)
-			if isEntity then
-				if curElem == "archetypeName" then
-					db[key].name = text
-					db[key].model = GetHashKey(text)
-				end
-			end
-		end
-	}
+    local parser = SLAXML:parser {
+        startElement = function(name, nsURI, nsPrefix)
+            curElem = name
+            if name == "Item" and nsURI == "CEntityDef" then
+                isEntity = true
+                db[key] = {
+                    quaternion = {},
+                    x = 0.0,
+                    y = 0.0,
+                    z = 0.0,
+                    pitch = 0.0,
+                    roll = 0.0,
+                    yaw = 0.0
+                }
+            end
+        end,
+        attribute = function(name, value, nsURI, nsPrefix)
+            if isEntity then
+                if name == "x" or name == "y" or name == "z" then
+                    db[key][name] = tonumber(value) or 0.0
+                elseif name == "type" and value == "CEntityDef" then
+                    -- Already handled in startElement, no need to repeat
+                elseif name == "value" and curElem == "flags" then
+                    local intValue = tonumber(value) or 0
+                    db[key].isFrozen = (intValue & 32) == 32
+                end
+            end
+        end,
+        closeElement = function(name, nsURI)
+            if isEntity and name == "Item" and nsURI == "CEntityDef" then
+                isEntity = false
+                i = i + 1
+                key = tostring(i)
+            end
+            curElem = nil
+        end,
+        text = function(text, cdata)
+            if isEntity then
+                if curElem == "archetypeName" then
+                    db[key].name = text
+                    db[key].model = GetHashKey(text)  -- Assuming GetHashKey is defined elsewhere
+                end
+            end
+        end
+    }
 
-	parser:parse(xml, {stripWhitespace=true})
+    parser:parse(xml, {stripWhitespace = true})
 
-	LoadDatabase(db, false, false)
+    -- Assuming LoadDatabase is defined elsewhere and accepts the 'db' table
+    LoadDatabase(db, false, false)
 end
+
 
 function ExportDatabase(format)
 	UpdateDatabase()
 
 	local db = PrepareDatabaseForSave()
 
-	if format == 'spooner-db-json' then
+	if format == 'plants' then
+		return ConvertDatabaseToPlants(db)
+	elseif format == 'spooner-db-json' then
 		return json.encode(db)
 	elseif format == 'map-editor-xml' then
 		return ConvertDatabaseToMapEditorXml(GetPlayerName(), db)

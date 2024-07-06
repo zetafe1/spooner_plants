@@ -18,6 +18,7 @@
 				<div>Rotate: <span id="rotate-mode"></span> - Speed: <span id="rotate-speed"></span></div>
 				<div id="focus-info" style="display: none">Focus: <span id="focus-target"></span> (<span id="focus-mode"></span>)</div>
 				<div id="place-on-ground-container">Snap to Ground: <span id="place-on-ground"></span></div>
+				<div>Spooner fork by LeonTheCreator</div>
 				<div id="controls">
 					<div id="basic-controls" class="control-set">
 						<div class="control-and-help">
@@ -583,14 +584,15 @@
 		<div id="import-export-db">
 			<div id="import-export-controls">
 				<select id="import-export-format">
+					<option value="ymap">Ymap</option>
+					<option value="plants">Plants (WIP)</option>
 					<option value="spooner-db-json">Spooner DB JSON</option>
 					<option value="map-editor-xml">Map Editor XML</option>
-					<option value="ymap">Ymap</option>
 					<option value="propplacer">propplacer JSON</option>
 					<option value="backup">Spooner Backup</option>
 				</select>
 				<input type="text" id="import-url" placeholder="Import from URL">
-				<button id="import-db">Import</button>
+				<button id="import-db" disabled>Import</button>
 				<button id="export-db">Export</button>
 			</div>
 			<textarea id="import-export-content" spellcheck="false"></textarea>
@@ -864,6 +866,18 @@
 						<th>Import?</th>
 					</tr>
 					<tr>
+						<td>Ymap</th>
+						<td>Native map format used by GTA V/RDR2</td>
+						<td>Yes</td>
+						<td>No</td>
+					</tr>
+					<tr>
+						<td>Plants</th>
+						<td>WIP format for Plants</td>
+						<td>Yes</td>
+						<td>No</td>
+					</tr>
+					<tr>
 						<td>Spooner DB JSON</td>
 						<td>The native format used by the spooner</td>
 						<td>Yes</td>
@@ -874,12 +888,6 @@
 						<td>XML format used by the Lambdarevolution map editor and the objectloader resource</td>
 						<td>Yes</td>
 						<td>No</td>
-					</tr>
-					<tr>
-						<td>Ymap</th>
-						<td>Native map format used by GTA V/RDR2</td>
-						<td>Yes</td>
-						<td>Yes</td>
 					</tr>
 					<tr>
 						<td>propplacer JSON</td>
