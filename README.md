@@ -4,7 +4,7 @@
 
 # VIDEO TUTORIAL RedM Bush/Trees Ymap PropInstance Tutorial
 
-[# WIP fork from daggre Spooner fork](https://youtu.be/PYl_x7IQ8Ao?si=nIZ-bSVCQzv0NfG8)
+[RedM Bush/Trees Ymap PropInstance Tutorial](https://youtu.be/PYl_x7IQ8Ao?si=nIZ-bSVCQzv0NfG8)
 
 # Spooner
 
