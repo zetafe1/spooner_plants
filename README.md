@@ -1,10 +1,10 @@
 # WIP fork from daggre Spooner fork
 
-- Adds new export options "Plants" with rotation matrix ouput
+- Adds new export options "Plants" with rotation matrix ouput - credits to LeonhardGottberg | https://discord.gg/leonthecreator
 
-# Discord
+# VIDEO TUTORIAL RedM Bush/Trees Ymap PropInstance Tutorial
 
-https://discord.gg/leonthecreator
+[# WIP fork from daggre Spooner fork](https://youtu.be/PYl_x7IQ8Ao?si=nIZ-bSVCQzv0NfG8)
 
 # Spooner
 
