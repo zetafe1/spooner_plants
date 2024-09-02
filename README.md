@@ -13,12 +13,13 @@ RedM Bush Ymap PropInstance Tutorial :
 - Save in a stream folder
 
 # More info
+- No GTAV Compatibility
 - Only compatible with entity type fragment.yft
 - Entity type Drawable.ydr spawn with no collision(tree, rock)
 - There are some small trees in fragment.yft
 - List of compatible entities coming soon
 - This is a WIP version, there may be crashes or glitches
-- If you want to share your tests(https://discord.gg/2jBHRDavjB)
+- If you want to share your progress(https://discord.gg/2jBHRDavjB)
 
 # Requirements
 - [uiprompt](https://github.com/kibook/redm-uiprompt) (only required when using spooner on RedM)
