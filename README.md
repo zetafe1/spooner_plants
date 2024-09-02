@@ -1,5 +1,5 @@
 # Description
-This is a Spooner version with new export and green theme :
+This is a Spooner version(WIP) with new export and green theme :
 - Adds new ymap export options "Plants" (Compatibilty with Bush type)
 - Generate the entire ymap with matrix rotation for each entity
 
