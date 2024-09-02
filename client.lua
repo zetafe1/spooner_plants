@@ -1809,63 +1809,6 @@ local function toQuaternion(pitch, roll, yaw)
 	return q
 end
 
-function ConvertDatabaseToPlants(database)
-	local minX, maxX, minY, maxY, minZ, maxZ
-
-	local entitiesXml = '\t<entities>\n'
-
-	for entity, properties in pairs(database.spawn) do
-		if properties.type == 3 then
-			local q = toQuaternion(properties.pitch, properties.roll, properties.yaw)
-
-			if not minX or properties.x < minX then
-				minX = properties.x
-			end
-			if not maxX or properties.x > maxX then
-				maxX = properties.x
-			end
-			if not minY or properties.y < minY then
-				minY = properties.y
-			end
-			if not maxY or properties.y > maxY then
-				maxY = properties.y
-			end
-			if not minZ or properties.z < minZ then
-				minZ = properties.z
-			end
-			if not maxZ or properties.z > maxZ then
-				maxZ = properties.z
-			end
-			
-			local m1, m2, m3, m4, m5, m6, m7, m8, m9 = RotationMatrix(q.w, q.x, q.y, q.z)
-			
-			entitiesXml = entitiesXml .. '\t\t<Item type="CEntityDef">\n'
-			entitiesXml = entitiesXml .. '\t\t\t<archetypeName>' .. properties.name .. '</archetypeName>\n'
-			entitiesXml = entitiesXml .. string.format('\t\t\t<position x="%f" y="%f" z="%f"/>\n', properties.x, properties.y, properties.z)
-			entitiesXml = entitiesXml .. string.format('\t\t\t<rotation w="%f" x="%f" y="%f" z="%f"/>\n', q.w, q.x, q.y, q.z)
-			entitiesXml = entitiesXml .. string.format('\t\t\t<RotationMatrix>\n\t\t\t\t %f, %f, %f, %f\n\t\t\t\t %f, %f, %f, %f\n\t\t\t\t %f, %f, %f, %f \n\t\t\t</RotationMatrix>\n', m1, m2, m3, properties.x, m4, m5, m6, properties.y, m7, m8, m9, properties.z)
-			entitiesXml = entitiesXml .. '\t\t</Item>\n'
-		end
-	end
-
-	entitiesXml = entitiesXml .. '\t</entities>\n'
-
-	local xml = '<?xml version="1.0"?>\n<CMapData>\n\t<flags value="2"/>\n\t<contentFlags value="65"/>\n'
-
-	if minX and minY and minZ and maxX and maxY and maxZ then
-		xml = xml .. string.format('\t<streamingExtentsMin x="%f" y="%f" z="%f"/>\n', minX - 400, minY - 400, minZ - 400)
-		xml = xml .. string.format('\t<streamingExtentsMax x="%f" y="%f" z="%f"/>\n', maxX + 400, maxY + 400, maxZ + 400)
-		xml = xml .. string.format('\t<entitiesExtentsMin x="%f" y="%f" z="%f"/>\n', minX -200, minY -200, minZ -200)
-		xml = xml .. string.format('\t<entitiesExtentsMax x="%f" y="%f" z="%f"/>\n', maxX + 200, maxY +200, maxZ +200)
-
-		xml = xml .. entitiesXml
-	end
-
-	xml = xml .. '</CMapData>'
-
-	return xml
-end
-
 function RotationMatrix(w, x, y, z)
 
     local m1 = 1 - 2 * (y * y + z * z)
@@ -1879,6 +1822,176 @@ function RotationMatrix(w, x, y, z)
     local m9 = 1 - 2 * (x * x + y * y)
 
     return m1, m2, m3, m4, m5, m6, m7, m8, m9
+end
+
+function ConvertDatabaseToPlants(database)
+    local minX, maxX, minY, maxY, minZ, maxZ
+
+    local archetypeGroups = {}
+
+    for entity, properties in pairs(database.spawn) do
+        if properties.type == 3 then
+            local archetypeName = properties.name
+            local q = toQuaternion(properties.pitch, properties.roll, properties.yaw)
+            local m1, m2, m3, m4, m5, m6, m7, m8, m9 = RotationMatrix(q.w, q.x, q.y, q.z)
+
+            if not minX or properties.x < minX then minX = properties.x end
+            if not maxX or properties.x > maxX then maxX = properties.x end
+            if not minY or properties.y < minY then minY = properties.y end
+            if not maxY or properties.y > maxY then maxY = properties.y end
+            if not minZ or properties.z < minZ then minZ = properties.z end
+            if not maxZ or properties.z > maxZ then maxZ = properties.z end
+
+            if not archetypeGroups[archetypeName] then
+                archetypeGroups[archetypeName] = {
+                    attributes = {
+                        archetypeName = archetypeName,
+                        flags = "1572864",
+                        id = "0x0000000000000000",
+                        position = {x = 0, y = 0, z = 0},
+                        rotation = {x = 0, y = 0, z = 0, w = 0},
+                        scaleXY = "0",
+                        scaleZ = "0",
+                        parentIndex = "0",
+                        lodDist = "473",
+                        childLodDist = "0",
+                        lodLevel = "-1",
+                        numChildren = "0",
+                        priorityLevel = "-1",
+                        powerGridId = "0"
+                    },
+                    instances = {}
+                }
+            end
+
+            table.insert(archetypeGroups[archetypeName].instances, {
+                InstMat = {
+                    m1, m2, m3, properties.x,
+                    m4, m5, m6, properties.y,
+                    m7, m8, m9, properties.z
+                },
+                RcpScaleXY = "1",
+                Tint = "4294967295",
+                RcpScaleZ = "1"
+            })
+        end
+    end
+
+    local entitiesXml = '\t<entities />\n'
+	entitiesXml = entitiesXml .. '\t<containerLods />\n'
+	entitiesXml = entitiesXml .. '\t<boxOccluders />\n'	
+	entitiesXml = entitiesXml .. '\t<occludeModels />\n'
+	entitiesXml = entitiesXml .. '\t<physicsDictionaries />	\n'	
+    entitiesXml = entitiesXml .. '\t<instancedData type="rage__fwInstancedMapData">\n'
+    entitiesXml = entitiesXml .. '\t\t<ImapLink />\n'	
+    entitiesXml = entitiesXml .. '\t\t<PropInstanceList itemType="rage__fwPropInstanceListDef">\n'
+
+    for archetypeName, group in pairs(archetypeGroups) do
+        local minAABB = {x = math.huge, y = math.huge, z = math.huge}
+        local maxAABB = {x = -math.huge, y = -math.huge, z = -math.huge}
+        local safetyMargin = 5.0  -- Safety margin for AABB
+
+        entitiesXml = entitiesXml .. '\t\t\t<Item>\n'
+        entitiesXml = entitiesXml .. '\t\t\t\t<archetypeName>' .. group.attributes.archetypeName .. '</archetypeName>\n'
+        entitiesXml = entitiesXml .. '\t\t\t\t<flags value="' .. group.attributes.flags .. '" />\n'
+        entitiesXml = entitiesXml .. '\t\t\t\t<id value="' .. group.attributes.id .. '" />\n'
+        entitiesXml = entitiesXml .. '\t\t\t\t<position x="' .. group.attributes.position.x .. '" y="' .. group.attributes.position.y .. '" z="' .. group.attributes.position.z .. '" />\n'
+        entitiesXml = entitiesXml .. '\t\t\t\t<rotation x="' .. group.attributes.rotation.x .. '" y="' .. group.attributes.rotation.y .. '" z="' .. group.attributes.rotation.z .. '" w="' .. group.attributes.rotation.w .. '" />\n'
+        entitiesXml = entitiesXml .. '\t\t\t\t<scaleXY value="' .. group.attributes.scaleXY .. '" />\n'
+        entitiesXml = entitiesXml .. '\t\t\t\t<scaleZ value="' .. group.attributes.scaleZ .. '" />\n'
+        entitiesXml = entitiesXml .. '\t\t\t\t<parentIndex value="' .. group.attributes.parentIndex .. '" />\n'
+        entitiesXml = entitiesXml .. '\t\t\t\t<lodDist value="' .. group.attributes.lodDist .. '" />\n'
+        entitiesXml = entitiesXml .. '\t\t\t\t<childLodDist value="' .. group.attributes.childLodDist .. '" />\n'
+        entitiesXml = entitiesXml .. '\t\t\t\t<lodLevel>' .. group.attributes.lodLevel .. '</lodLevel>\n'
+        entitiesXml = entitiesXml .. '\t\t\t\t<numChildren value="' .. group.attributes.numChildren .. '" />\n'
+        entitiesXml = entitiesXml .. '\t\t\t\t<priorityLevel>' .. group.attributes.priorityLevel .. '</priorityLevel>\n'
+		entitiesXml = entitiesXml .. '\t\t\t\t<extensions />\n'
+        entitiesXml = entitiesXml .. '\t\t\t\t<powerGridId value="' .. group.attributes.powerGridId .. '" />\n'
+        entitiesXml = entitiesXml .. '\t\t\t\t<InstanceList itemType="rage__fwPropInstanceListDef__InstanceData">\n'
+
+        for _, instance in ipairs(group.instances) do
+            local x, y, z = instance.InstMat[4], instance.InstMat[8], instance.InstMat[12]
+
+            if x < minAABB.x then minAABB.x = x end
+            if x > maxAABB.x then maxAABB.x = x end
+            if y < minAABB.y then minAABB.y = y end
+            if y > maxAABB.y then maxAABB.y = y end
+            if z < minAABB.z then minAABB.z = z end
+            if z > maxAABB.z then maxAABB.z = z end
+
+            entitiesXml = entitiesXml .. '\t\t\t\t\t<Item>\n'
+			entitiesXml = entitiesXml .. '\t\t\t\t\t\t<InstMat>\n' ..
+				string.format('\t\t\t\t\t\t\t%f, %f, %f, %f\n\t\t\t\t\t\t\t%f, %f, %f, %f\n\t\t\t\t\t\t\t%f, %f, %f, %f', 
+				instance.InstMat[1], instance.InstMat[2], instance.InstMat[3], instance.InstMat[4], 
+				instance.InstMat[5], instance.InstMat[6], instance.InstMat[7], instance.InstMat[8], 
+				instance.InstMat[9], instance.InstMat[10], instance.InstMat[11], instance.InstMat[12]) ..
+				'\n\t\t\t\t\t\t</InstMat>\n'
+            entitiesXml = entitiesXml .. '\t\t\t\t\t\t<RcpScaleXY value="' .. instance.RcpScaleXY .. '" />\n'
+            entitiesXml = entitiesXml .. '\t\t\t\t\t\t<Tint value="' .. instance.Tint .. '" />\n'
+            entitiesXml = entitiesXml .. '\t\t\t\t\t\t<RcpScaleZ value="' .. instance.RcpScaleZ .. '" />\n'
+            entitiesXml = entitiesXml .. '\t\t\t\t\t</Item>\n'
+        end
+
+        entitiesXml = entitiesXml .. '\t\t\t\t</InstanceList>\n'
+
+        -- Add safety margin to AABB
+        minAABB.x = minAABB.x - safetyMargin
+        minAABB.y = minAABB.y - safetyMargin
+        minAABB.z = minAABB.z - safetyMargin
+        maxAABB.x = maxAABB.x + safetyMargin
+        maxAABB.y = maxAABB.y + safetyMargin
+        maxAABB.z = maxAABB.z + safetyMargin
+
+        entitiesXml = entitiesXml .. '\t\t\t\t<BatchAABB type="rage__spdAABB">\n'
+        entitiesXml = entitiesXml .. string.format('\t\t\t\t\t<min x="%f" y="%f" z="%f" w="0" />\n', minAABB.x, minAABB.y, minAABB.z)
+        entitiesXml = entitiesXml .. string.format('\t\t\t\t\t<max x="%f" y="%f" z="%f" w="0" />\n', maxAABB.x, maxAABB.y, maxAABB.z)
+        entitiesXml = entitiesXml .. '\t\t\t\t</BatchAABB>\n'
+        entitiesXml = entitiesXml .. '\t\t\t\t<InstanceLodDist value="300" />\n'
+        entitiesXml = entitiesXml .. '\t\t\t\t<ScaleRange x="1" y="1" z="1" w="1" />\n'
+        entitiesXml = entitiesXml .. '\t\t\t\t<PopulationGridData type="rage__fwEntityBatchPopulationData">\n'		
+		entitiesXml = entitiesXml .. '\t\t\t\t\t<Bitset>\n'
+		entitiesXml = entitiesXml .. '\t\t\t\t\t\t0x0000000000000000\n'
+		entitiesXml = entitiesXml .. '\t\t\t\t\t\t0x0000000000000000\n'
+		entitiesXml = entitiesXml .. '\t\t\t\t\t\t0x0000000000000000\n'
+		entitiesXml = entitiesXml .. '\t\t\t\t\t\t0x0000000000000000\n'
+		entitiesXml = entitiesXml .. '\t\t\t\t\t\t0x0000000000000000\n'
+		entitiesXml = entitiesXml .. '\t\t\t\t\t\t0x0000000000000000\n'		
+		entitiesXml = entitiesXml .. '\t\t\t\t\t\t0x0000000000000000\n'
+		entitiesXml = entitiesXml .. '\t\t\t\t\t\t0x0000000000000000\n'		
+		entitiesXml = entitiesXml .. '\t\t\t\t\t\t0x0000000000000000\n'
+		entitiesXml = entitiesXml .. '\t\t\t\t\t\t0x0000000000000000\n'
+		entitiesXml = entitiesXml .. '\t\t\t\t\t\t0x0000000000000000\n'		
+		entitiesXml = entitiesXml .. '\t\t\t\t\t\t0x0000000000000000\n'
+		entitiesXml = entitiesXml .. '\t\t\t\t\t\t0x0000000000000000\n'		
+		entitiesXml = entitiesXml .. '\t\t\t\t\t\t0x0000000000000000\n'
+		entitiesXml = entitiesXml .. '\t\t\t\t\t\t0x0000000000000000\n'		
+		entitiesXml = entitiesXml .. '\t\t\t\t\t</Bitset>\n'		
+		entitiesXml = entitiesXml .. '\t\t\t\t\t<GridSizeX value="0" />\n'
+ 		entitiesXml = entitiesXml .. '\t\t\t\t\t<GridSizeY value="0" />\n'
+		entitiesXml = entitiesXml .. '\t\t\t\t\t<RowSpan value="0" />\n'		
+ 		entitiesXml = entitiesXml .. '\t\t\t\t</PopulationGridData>\n'
+        entitiesXml = entitiesXml .. '\t\t\t\t<EnableEntityPromotion value="True" />\n'
+        entitiesXml = entitiesXml .. '\t\t\t\t<PreBakeCollision value="True" />\n'
+        entitiesXml = entitiesXml .. '\t\t\t\t<DeviceResources value="0x0000000000000000" />\n'
+        entitiesXml = entitiesXml .. '\t\t\t</Item>\n'
+    end
+
+    entitiesXml = entitiesXml .. '\t\t</PropInstanceList>\n'
+    entitiesXml = entitiesXml .. '\t</instancedData>\n'
+
+    local xml = '<?xml version="1.0" encoding="UTF-8"?>\n<CMapData>\n\t<parent />\n\t<flags value="0"/>\n\t<contentFlags value="1088"/>\n'
+
+    if minX and minY and minZ and maxX and maxY and maxZ then
+        xml = xml .. string.format('\t<streamingExtentsMin x="%f" y="%f" z="%f"/>\n', minX - 400, minY - 400, minZ - 400)
+        xml = xml .. string.format('\t<streamingExtentsMax x="%f" y="%f" z="%f"/>\n', maxX + 400, maxY + 400, maxZ + 400)
+        xml = xml .. string.format('\t<entitiesExtentsMin x="%f" y="%f" z="%f"/>\n', minX - 200, minY - 200, minZ - 200)
+        xml = xml .. string.format('\t<entitiesExtentsMax x="%f" y="%f" z="%f"/>\n', maxX + 200, maxY + 200, maxZ + 200)
+        xml = xml .. entitiesXml
+    end
+
+    xml = xml .. '</CMapData>'
+
+    return xml
 end
 
 function ConvertDatabaseToYmap(database)
