@@ -10,7 +10,7 @@ RedM Bush Ymap PropInstance Tutorial :
 - Place your bush entities and export with Plant(WIP)
 - Generate the contents of the ymap file and copies it
 - Create new file.ymap in CodeX and paste the content
-- Save in a stream folder
+- Save it in a stream folder
 
 # More info
 - No GTAV Compatibility
