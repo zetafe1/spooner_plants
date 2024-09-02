@@ -14,7 +14,8 @@ RedM Bush Ymap PropInstance Tutorial :
 
 # More info
 - Only compatible with entity type fragment.yft
-- entity type Drawable.ydr spawn with no collision
+- Entity type Drawable.ydr spawn with no collision(tree, rock)
+- There are some small trees in fragment.yft
 
 # Requirements
 - [uiprompt](https://github.com/kibook/redm-uiprompt) (only required when using spooner on RedM)
